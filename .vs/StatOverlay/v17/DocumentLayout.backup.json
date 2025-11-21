@@ -1,0 +1,37 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "S:\\Code projects\\StatOverlay\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B362E63C-EE2C-4D32-B0AE-1C37592E84CA}|StatOverlay.vcxproj|S:\\Code projects\\StatOverlay\\main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{B362E63C-EE2C-4D32-B0AE-1C37592E84CA}|StatOverlay.vcxproj|solutionrelative:main.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "main.cpp",
+              "DocumentMoniker": "S:\\Code projects\\StatOverlay\\main.cpp",
+              "RelativeDocumentMoniker": "main.cpp",
+              "ToolTip": "S:\\Code projects\\StatOverlay\\main.cpp",
+              "RelativeToolTip": "main.cpp",
+              "ViewState": "AgIAAJ0BAAAAAAAAAAAQwNMBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2025-11-20T01:00:02.051Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
