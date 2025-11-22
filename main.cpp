@@ -29,6 +29,11 @@ struct Metrics {
     float cpuLoad = 0.0f;
     float gpuTemp = 0.0f;
     float gpuLoad = 0.0f;
+
+    // RAM >>> added
+    float ramUsed = 0.0f;
+    float ramLoad = 0.0f;
+    float ramTotal = 0.0f;
 };
 
 static Metrics g_Metrics;
@@ -53,6 +58,21 @@ bool Contains(const std::wstring& haystack, const std::wstring& needle) {
         }
     );
     return (it != haystack.end());
+}
+
+// ----------------------------------------------------
+// Helper: Get total RAM
+// ----------------------------------------------------
+static float GetTotalRamGB()
+{
+    MEMORYSTATUSEX mem = {};
+    mem.dwLength = sizeof(mem);
+
+    if (GlobalMemoryStatusEx(&mem))
+    {
+        return (float)(mem.ullTotalPhys / (1024.0 * 1024.0 * 1024.0));
+    }
+    return 0.0f;
 }
 
 // ----------------------------------------------------
@@ -141,7 +161,6 @@ static void ExecuteOhmProcess()
         if (GetFileAttributesW(ohmPath.c_str()) == INVALID_FILE_ATTRIBUTES) return;
     }
 
-    LPCWSTR lpFile = L"OpenHardwareMonitor.exe";
     LPCWSTR lpParameters = L"/minimized /hide";
 
     HINSTANCE result = ShellExecuteW(
@@ -217,7 +236,7 @@ static bool InitWmi(IWbemServices** outSvc)
 }
 
 // ----------------------------------------------------
-// WMI: Query Loop
+// WMI: Query Loop (CPU/GPU/RAM)
 // ----------------------------------------------------
 static void UpdateThermalsWmi(IWbemServices* pSvc)
 {
@@ -263,6 +282,7 @@ static void UpdateThermalsWmi(IWbemServices* pSvc)
 
             bool isCpu = Contains(parent, L"cpu") || Contains(parent, L"processor") || Contains(name, L"cpu") || Contains(name, L"core");
             bool isGpu = Contains(parent, L"gpu") || Contains(parent, L"nvidia") || Contains(parent, L"radeon") || Contains(name, L"gpu");
+            bool isRam = Contains(parent, L"ram") || Contains(name, L"memory");   // RAM >>>
 
             if (type == L"Temperature")
             {
@@ -275,6 +295,19 @@ static void UpdateThermalsWmi(IWbemServices* pSvc)
             {
                 if (isCpu) { cpuLoadTotal += value; cpuLoadCount++; }
                 if (isGpu) { gpuLoadTotal += value; gpuLoadCount++; }
+
+                if (isRam) g_Metrics.ramLoad = value;   // RAM load %
+            }
+            else if (type == L"Data")
+            {
+                if (isRam)
+                {
+                    // FIX: Check if name contains "Used" to avoid grabbing "Available Memory"
+                    if (Contains(name, L"Used"))
+                    {
+                        g_Metrics.ramUsed = value;
+                    }
+                }
             }
         }
         VariantClear(&vName); VariantClear(&vType); VariantClear(&vVal); VariantClear(&vParent);
@@ -296,7 +329,11 @@ static DWORD WINAPI MetricsThreadProc(LPVOID)
     EnsureOhmRunning();
     Sleep(10000);
 
+    // RAM total >>>
+    g_Metrics.ramTotal = GetTotalRamGB();
+
     IWbemServices* pSvc = nullptr;
+
     while (g_Running)
     {
         if (!pSvc) {
@@ -314,7 +351,7 @@ static DWORD WINAPI MetricsThreadProc(LPVOID)
 }
 
 // ----------------------------------------------------
-// System Tray: Add Icon
+// System Tray
 // ----------------------------------------------------
 static void AddTrayIcon(HWND hwnd)
 {
@@ -330,17 +367,11 @@ static void AddTrayIcon(HWND hwnd)
     Shell_NotifyIconW(NIM_ADD, &g_nid);
 }
 
-// ----------------------------------------------------
-// System Tray: Remove Icon
-// ----------------------------------------------------
 static void RemoveTrayIcon()
 {
     Shell_NotifyIconW(NIM_DELETE, &g_nid);
 }
 
-// ----------------------------------------------------
-// System Tray: Show Context Menu
-// ----------------------------------------------------
 static void ShowTrayMenu(HWND hwnd)
 {
     POINT pt;
@@ -413,6 +444,13 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPara
         TextOutW(hdc, x, y, buf, lstrlenW(buf)); y += line;
 
         swprintf_s(buf, 256, L"GPU: %.0f C  |  %.0f%%", g_Metrics.gpuTemp, g_Metrics.gpuLoad);
+        TextOutW(hdc, x, y, buf, lstrlenW(buf)); y += line;
+
+        // RAM >>> Display Used / Total / %
+        swprintf_s(buf, 256, L"RAM: %.1f / %.1f GB  |  %.0f%%",
+            g_Metrics.ramUsed,
+            g_Metrics.ramTotal,
+            g_Metrics.ramLoad);
         TextOutW(hdc, x, y, buf, lstrlenW(buf));
 
         EndPaint(hwnd, &ps);
@@ -438,7 +476,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInst, _In_opt_ HINSTANCE, _In_ LPWSTR, _In_ 
     wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
     RegisterClassW(&wc);
 
-    int width = 240, height = 80;
+    int width = 320, height = 110;
     int screenW = GetSystemMetrics(SM_CXSCREEN);
 
     HWND hwnd = CreateWindowExW(

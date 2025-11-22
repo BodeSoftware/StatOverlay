@@ -1,0 +1,8 @@
+﻿  main.cpp
+S:\Code projects\StatOverlay\main.cpp(175,9): warning C4311: 'type cast': pointer truncation from 'HINSTANCE' to 'int'
+S:\Code projects\StatOverlay\main.cpp(175,9): warning C4302: 'type cast': truncation from 'HINSTANCE' to 'int'
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 157 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  StatOverlay.vcxproj -> S:\Code projects\StatOverlay\x64\Release\StatOverlay.exe
